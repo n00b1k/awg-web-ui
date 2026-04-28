@@ -4,7 +4,7 @@ from flask import Flask, render_template, request, jsonify, send_file, send_from
 from flask_socketio import SocketIO
 from flask_login import LoginManager, login_user, login_required, logout_user, current_user
 
-from config import (TEMPLATE_DIR, STATIC_DIR, FLASK_PORT, PRODUCTION, AUTO_START_SERVERS, CERT_FILE, KEY_FILE)
+from config import (TEMPLATE_DIR, STATIC_DIR, FLASK_PORT, PRODUCTION, AUTO_START_SERVERS, CERT_FILE, KEY_FILE, APP_VERSION)
 from auth import init_db, verify_password, get_user
 from manager import AmneziaManager
 from socket_events import register_socket_events
@@ -66,7 +66,7 @@ def login():
         else:
             flash(error or 'Invalid username or password', 'error')
     
-    return render_template('login.html')
+    return render_template('login.html', version=APP_VERSION)
 
 @app.route('/logout')
 @login_required
@@ -89,9 +89,10 @@ def get_defaults():
 @app.route('/')
 @login_required
 def index():
-    return render_template('index.html', current_user=current_user)
+    return render_template('index.html', current_user=current_user, version=APP_VERSION)
 
 @app.route('/static/<path:filename>')
+@login_required
 def static_files(filename):
     return send_from_directory(STATIC_DIR, filename)
 

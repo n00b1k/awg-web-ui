@@ -1,5 +1,7 @@
 import os
 
+APP_VERSION = '1.2.6'
+
 # Get the absolute path to the current directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')

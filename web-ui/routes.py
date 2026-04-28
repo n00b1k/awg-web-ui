@@ -173,6 +173,7 @@ def register_routes(app, amnezia_manager):
         return jsonify({"public_ip": new_ip})
 
     @app.route('/api/servers/<server_id>/config')
+    @login_required
     def get_server_config(server_id):
         """Get the raw WireGuard server configuration"""
         server = next((s for s in amnezia_manager.config['servers'] if s['id'] == server_id), None)
