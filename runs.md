@@ -1,4 +1,4 @@
-### run (tag = 1.1.7, 1.2.4, 1.2.5)
+### run (tag = 1.1.7, 1.2.4-1.2.7)
 
 docker run --rm n00b1k/awg-web-ui:1.2.5 gph 'password'
 -e ADMIN_PASSWORD_HASH='$2b$12$ePJa8CpQ2T2h2ISjqNeec.ARH7kK/VyIpf6KhPhMgSDRwM.r2mmxa'

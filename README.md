@@ -6,7 +6,7 @@ All server configuration is done via web interface or via API endpoints.
 <img src="screenshot2.png" alt="Web UI screenshot" width="50%"/>
 <img src="screenshot.png" alt="Web UI screenshot" width="50%"/>
 
-## 🚀 Features
+## Features
 
 *   **Web-based Management**: Intuitive UI for managing VPN servers and clients
 *   **AmneziaWG Integration**: Full support for AmneziaWG's obfuscation features
@@ -21,7 +21,7 @@ All server configuration is done via web interface or via API endpoints.
 *   **AWG 1.5 and 2.0 support**: I1-I5 and S3-S4 values can be customized
 *   **Client data**: Clients' traffic, last handshake and IP are displayed and auto-refreshed
 
-## 🏗️ Architecture
+## Architecture
 
 ### Components
 
@@ -44,7 +44,7 @@ All server configuration is done via web interface or via API endpoints.
 *   Automatic service restart
 *   Log management
 
-## 🔧 API Endpoints
+## API Endpoints
 
 ### Server Management
 
@@ -154,7 +154,7 @@ Content-Type: application/json
 
 `GET /api/config/export`
 
-## 🐳 Docker Deployment
+## Docker Deployment
 
 Official docker image repository: https://hub.docker.com/r/n00b1k/awg-web-ui
 
@@ -202,7 +202,7 @@ docker run -d \
 You can protect your webserver by limiting connections to the it through the list of IP address(es) and IP range(s). To enable it you need to provide env variable `IP_LIST` at docker container run, e.g.
 `-e IP_LIST="100.200.101.201, 50.100.10.0/24"`
 
-## 📊 Obfuscation Parameters
+## Obfuscation Parameters
 
 AmneziaWG supports advanced traffic obfuscation to bypass censorship and DPI (Deep Packet Inspection).
 
@@ -259,7 +259,7 @@ AmneziaWG supports advanced traffic obfuscation to bypass censorship and DPI (De
 *   **Better Performance**: 1420-1440 (may have compatibility issues)
 *   **Trade-off**: Higher MTU = better performance but potential fragmentation
 
-## 📝 Logs and Monitoring
+## Logs and Monitoring
 
 ### Application logs
 
@@ -271,7 +271,7 @@ AmneziaWG supports advanced traffic obfuscation to bypass censorship and DPI (De
 
 `docker exec amnezia-web-ui tail -f /var/log/supervisor/supervisord.log`
 
-## 🔄 Backup and Restore
+## Backup and Restore
 Export Configuration
 
 ### Export all configuration via API
@@ -294,5 +294,3 @@ Export Configuration
 
 # Support
 The NO support provided as well as no regular updates are planned. Found issues can be fixed if free time permits.
-
-From Russia with L❤️VE

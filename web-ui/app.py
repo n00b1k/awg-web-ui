@@ -10,6 +10,7 @@ from manager import AmneziaManager
 from socket_events import register_socket_events
 from utils import get_ssl_context, print_config_info
 from routes import register_routes
+from contextlib import contextmanager
 
 app = Flask(__name__,
     template_folder=TEMPLATE_DIR,
@@ -105,3 +106,14 @@ if __name__ == '__main__':
         serve(app, host='0.0.0.0', port=FLASK_PORT, threads=4)
     else:
         app.run(host='0.0.0.0', port=FLASK_PORT, ssl_context=(cert_file, key_file), debug=False, threaded=True)
+
+@contextmanager
+def get_db():
+    """Контекстный менеджер для работы с БД"""
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        yield conn
+        conn.commit()
+    finally:
+        conn.close()

@@ -734,7 +734,7 @@ class AmneziaApp {
                             server.status === 'running' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                         }">${server.status}</span>
                         <button onclick="amneziaApp.deleteServer('${server.id}')" class="text-red-500 hover:text-red-700">
-                            🗑️ Delete
+                            &#x267A; Delete
                         </button>
                     </div>
                 </div>
