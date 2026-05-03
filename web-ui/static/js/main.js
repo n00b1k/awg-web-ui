@@ -1,4 +1,7 @@
 // AmneziaWG Web UI - Main Application JavaScript
+import { getElement, showTempMessage, updateStatus, updatePublicIp, showError, hideError, escapeHtml } from './ui.js';
+
+
 class AmneziaApp {
     constructor() {
         this.socket = null;
@@ -16,14 +19,6 @@ class AmneziaApp {
         });
     }
 
-    // Utility function to safely get elements
-    getElement(id) {
-        const element = document.getElementById(id);
-        if (!element) {
-            console.warn(`Element with id '${id}' not found`);
-        }
-        return element;
-    }
 
     logout() {
         if (confirm('Are you sure you want to logout?')) {
@@ -40,8 +35,8 @@ class AmneziaApp {
 }
 
     toggleForm() {
-        const container = this.getElement('serverFormContainer');
-        const icon = this.getElement('toggleIcon');
+        const container = getElement('serverFormContainer');
+        const icon = getElement('toggleIcon');
         
         if (container && icon) {
             if (container.classList.contains('hidden')) {
@@ -56,7 +51,7 @@ class AmneziaApp {
 
     setupEventListeners() {
         // Server form submission
-        const serverForm = this.getElement('serverForm');
+        const serverForm = getElement('serverForm');
         if (serverForm) {
             serverForm.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -65,7 +60,7 @@ class AmneziaApp {
         }
 
         // Random parameters button
-        const randomParamsBtn = this.getElement('randomParamsBtn');
+        const randomParamsBtn = getElement('randomParamsBtn');
         if (randomParamsBtn) {
             randomParamsBtn.addEventListener('click', () => {
                 this.generateRandomParams();
@@ -73,7 +68,7 @@ class AmneziaApp {
         }
 
         // Refresh IP button
-        const refreshIpBtn = this.getElement('refreshIpBtn');
+        const refreshIpBtn = getElement('refreshIpBtn');
         if (refreshIpBtn) {
             refreshIpBtn.addEventListener('click', () => {
                 this.refreshPublicIp();
@@ -81,7 +76,7 @@ class AmneziaApp {
         }
 
         // Obfuscation toggle
-        const obfuscationCheckbox = this.getElement('enableObfuscation');
+        const obfuscationCheckbox = getElement('enableObfuscation');
         if (obfuscationCheckbox) {
             obfuscationCheckbox.addEventListener('change', (e) => {
                 this.toggleObfuscationParams(e.target.checked);
@@ -90,7 +85,7 @@ class AmneziaApp {
             this.toggleObfuscationParams(obfuscationCheckbox.checked);
         }
 
-        const awg2Checkbox = this.getElement('enableAwg2');
+        const awg2Checkbox = getElement('enableAwg2');
         if (awg2Checkbox) {
             awg2Checkbox.addEventListener('change', (e) => {
                 this.toggleAwg2Fields(e.target.checked);
@@ -102,7 +97,7 @@ class AmneziaApp {
         this.setupFormValidation();
         
         // Add toggle button listener
-        const toggleBtn = this.getElement('toggleFormBtn');
+        const toggleBtn = getElement('toggleFormBtn');
         if (toggleBtn) {
             toggleBtn.addEventListener('click', () => {
                 this.toggleForm();
@@ -111,38 +106,32 @@ class AmneziaApp {
     }
 
     setupFormValidation() {
-        const nameElement = this.getElement('serverName');
-        const portElement = this.getElement('serverPort');
-        const subnetElement = this.getElement('serverSubnet');
+        const nameElement = getElement('serverName');
+        const portElement = getElement('serverPort');
+        const subnetElement = getElement('serverSubnet');
         
         if (nameElement) {
             nameElement.addEventListener('input', () => {
-                this.hideError('nameError');
+                hideError('nameError');
             });
         }
         
         if (portElement) {
             portElement.addEventListener('input', () => {
-                this.hideError('portError');
+                hideError('portError');
             });
         }
         
         if (subnetElement) {
             subnetElement.addEventListener('input', () => {
-                this.hideError('subnetError');
+                hideError('subnetError');
             });
         }
     }
 
-    hideError(errorId) {
-        const errorElement = this.getElement(errorId);
-        if (errorElement) {
-            errorElement.classList.add('hidden');
-        }
-    }
 
     toggleObfuscationParams(show) {
-        const obfuscationParams = this.getElement('obfuscationParams');
+        const obfuscationParams = getElement('obfuscationParams');
         if (obfuscationParams) {
             obfuscationParams.style.display = show ? 'block' : 'none';
         }
@@ -163,7 +152,7 @@ class AmneziaApp {
         if (trafficData.client_traffic) {
             for (const serverId in trafficData.client_traffic) {
                 if (trafficData.client_traffic.hasOwnProperty(serverId)) {
-                    const clientsContainer = this.getElement(`clients-${serverId}`);
+                    const clientsContainer = getElement(`clients-${serverId}`);
                     if (clientsContainer) {
                         const serverTraffic = trafficData.client_traffic[serverId];
                         
@@ -285,23 +274,23 @@ class AmneziaApp {
 
         this.socket.on('connect', () => {
             console.log("✅ Connected to server via WebSocket");
-            this.updateStatus('Connected to AmneziaWG Web UI');
+            updateStatus('Connected to AmneziaWG Web UI');
         });
 
         this.socket.on('disconnect', () => {
             console.log("❌ Disconnected from server");
-            this.updateStatus('Disconnected from AmneziaWG Web UI');
+            updateStatus('Disconnected from AmneziaWG Web UI');
         });
 
         this.socket.on('connect_error', (error) => {
             console.error("❌ WebSocket connection error:", error);
-            this.updateStatus('Connection error - retrying...');
+            updateStatus('Connection error - retrying...');
         });
 
         this.socket.on('status', (data) => {
             console.log("Status update:", data);
             if (data.public_ip) {
-                this.updatePublicIp(data.public_ip);
+                updatePublicIp(data.public_ip);
             }
         });
 
@@ -317,45 +306,12 @@ class AmneziaApp {
         });
     }
 
-    updateStatus(message) {
-        const statusElement = this.getElement('status');
-        const indicatorElement = this.getElement('statusIndicator');
-        
-        if (statusElement) {
-            statusElement.textContent = message;
-        }
-        
-        // Update the colored indicator based on connection status
-        if (indicatorElement) {
-            // Remove all existing color classes
-            indicatorElement.classList.remove('bg-green-500', 'bg-red-500', 'bg-gray-400', 'bg-yellow-500');
-            
-            if (message.includes('Connected')) {
-                indicatorElement.classList.add('bg-green-500');
-            } else if (message.includes('Disconnected')) {
-                indicatorElement.classList.add('bg-red-500');
-            } else if (message.includes('error') || message.includes('Error')) {
-                indicatorElement.classList.add('bg-red-500');
-            } else if (message.includes('retrying')) {
-                indicatorElement.classList.add('bg-yellow-500');
-            } else {
-                indicatorElement.classList.add('bg-gray-400');
-            }
-        }
-    }
-
-    updatePublicIp(ip) {
-        const publicIpElement = this.getElement('publicIp');
-        if (publicIpElement) {
-            publicIpElement.textContent = ip;
-        }
-    }
 
     refreshPublicIp() {
         fetch('/api/system/refresh-ip')
             .then(response => response.json())
             .then(data => {
-                this.updatePublicIp(data.public_ip);
+                updatePublicIp(data.public_ip);
                 this.loadServers();
             })
             .catch(error => {
@@ -365,15 +321,15 @@ class AmneziaApp {
 
     generateRandomParams() {
         // Generate random values within recommended ranges
-        const jcElement = this.getElement('paramJc');
-        const s1Element = this.getElement('paramS1');
-        const s2Element = this.getElement('paramS2');
-        const s3Element = this.getElement('paramS3');
-        const s4Element = this.getElement('paramS4');
-        const h1Element = this.getElement('paramH1');
-        const h2Element = this.getElement('paramH2');
-        const h3Element = this.getElement('paramH3');
-        const h4Element = this.getElement('paramH4');
+        const jcElement = getElement('paramJc');
+        const s1Element = getElement('paramS1');
+        const s2Element = getElement('paramS2');
+        const s3Element = getElement('paramS3');
+        const s4Element = getElement('paramS4');
+        const h1Element = getElement('paramH1');
+        const h2Element = getElement('paramH2');
+        const h3Element = getElement('paramH3');
+        const h4Element = getElement('paramH4');
         
         if (jcElement) jcElement.value = Math.floor(Math.random() * 9) + 4; // 4-12
         if (s1Element) s1Element.value = Math.floor(Math.random() * 136) + 15; // 15-150
@@ -395,7 +351,7 @@ class AmneziaApp {
     }
 
     showFormStatus(message, type) {
-        const statusDiv = this.getElement('formStatus');
+        const statusDiv = getElement('formStatus');
         if (statusDiv) {
             statusDiv.textContent = message;
             statusDiv.className = `text-sm mt-2 ${type === 'success' ? 'text-green-600' : 'text-red-600'}`;
@@ -441,58 +397,58 @@ class AmneziaApp {
         let isValid = true;
 
         // Reset errors
-        this.hideError('nameError');
-        this.hideError('portError');
-        this.hideError('subnetError');
-        this.hideError('mtuError');
-        this.hideError('dnsError');
+        hideError('nameError');
+        hideError('portError');
+        hideError('subnetError');
+        hideError('mtuError');
+        hideError('dnsError');
 
         // Validate name
-        const nameElement = this.getElement('serverName');
+        const nameElement = getElement('serverName');
         const name = nameElement ? nameElement.value.trim() : '';
         if (!name) {
-            this.showError('nameError', 'Server name is required');
+            showError('nameError', 'Server name is required');
             isValid = false;
         }
 
         // Validate port
-        const portElement = this.getElement('serverPort');
+        const portElement = getElement('serverPort');
         const port = portElement ? parseInt(portElement.value) : 0;
         if (!port || port < 1 || port > 65535) {
-            this.showError('portError', 'Port must be between 1 and 65535');
+            showError('portError', 'Port must be between 1 and 65535');
             isValid = false;
         }
 
         // Validate subnet
-        const subnetElement = this.getElement('serverSubnet');
+        const subnetElement = getElement('serverSubnet');
         const subnet = subnetElement ? subnetElement.value : '';
         const subnetRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
         if (!subnet || !subnetRegex.test(subnet)) {
-            this.showError('subnetError', 'Valid subnet is required (e.g., 10.0.0.0/24)');
+            showError('subnetError', 'Valid subnet is required (e.g., 10.0.0.0/24)');
             isValid = false;
         }
 
         // Validate MTU
-        const mtuElement = this.getElement('serverMTU');
+        const mtuElement = getElement('serverMTU');
         const mtu = mtuElement ? parseInt(mtuElement.value) : 0;
         if (!mtu || mtu < 1280 || mtu > 1440) {
-            this.showError('mtuError', 'MTU must be between 1280 and 1440');
+            showError('mtuError', 'MTU must be between 1280 and 1440');
             isValid = false;
         }
 
         // Validate DNS
-        const dnsElement = this.getElement('serverDNS');
+        const dnsElement = getElement('serverDNS');
         const dns = dnsElement ? dnsElement.value.trim() : '';
         const dnsServers = dns.split(',').map(s => s.trim()).filter(s => s);
         const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
 
         if (!dns || dnsServers.length === 0) {
-            this.showError('dnsError', 'At least one DNS server is required');
+            showError('dnsError', 'At least one DNS server is required');
             isValid = false;
         } else {
             for (const dnsServer of dnsServers) {
                 if (!ipRegex.test(dnsServer)) {
-                    this.showError('dnsError', `Invalid DNS server IP: ${dnsServer}`);
+                    showError('dnsError', `Invalid DNS server IP: ${dnsServer}`);
                     isValid = false;
                     break;
                 }
@@ -504,50 +460,43 @@ class AmneziaApp {
 
     // Add DNS input validation listener
     setupFormValidation() {
-        const nameElement = this.getElement('serverName');
-        const portElement = this.getElement('serverPort');
-        const subnetElement = this.getElement('serverSubnet');
-        const mtuElement = this.getElement('serverMTU');
-        const dnsElement = this.getElement('serverDNS');
+        const nameElement = getElement('serverName');
+        const portElement = getElement('serverPort');
+        const subnetElement = getElement('serverSubnet');
+        const mtuElement = getElement('serverMTU');
+        const dnsElement = getElement('serverDNS');
 
         if (nameElement) {
             nameElement.addEventListener('input', () => {
-                this.hideError('nameError');
+                hideError('nameError');
             });
         }
 
         if (portElement) {
             portElement.addEventListener('input', () => {
-                this.hideError('portError');
+                hideError('portError');
             });
         }
 
         if (subnetElement) {
             subnetElement.addEventListener('input', () => {
-                this.hideError('subnetError');
+                hideError('subnetError');
             });
         }
 
         if (mtuElement) {
             mtuElement.addEventListener('input', () => {
-                this.hideError('mtuError');
+                hideError('mtuError');
             });
         }
 
         if (dnsElement) {
             dnsElement.addEventListener('input', () => {
-                this.hideError('dnsError');
+                hideError('dnsError');
             });
         }
     }
 
-    showError(errorId, message) {
-        const errorElement = this.getElement(errorId);
-        if (errorElement) {
-            errorElement.textContent = message;
-            errorElement.classList.remove('hidden');
-        }
-    }
 
     createServer() {
         console.log("Creating server...");
@@ -559,15 +508,15 @@ class AmneziaApp {
         }
 
         // Safely get form values with fallbacks
-        const nameElement = this.getElement('serverName');
-        const publicIpElement = this.getElement('serverPublicIp');
-        const portElement = this.getElement('serverPort');
-        const subnetElement = this.getElement('serverSubnet');
-        const mtuElement = this.getElement('serverMTU');
-        const dnsElement = this.getElement('serverDNS');
-        const obfuscationElement = this.getElement('enableObfuscation');
-        const awg2Element = this.getElement('enableAwg2');
-        const autoStartElement = this.getElement('autoStart');
+        const nameElement = getElement('serverName');
+        const publicIpElement = getElement('serverPublicIp');
+        const portElement = getElement('serverPort');
+        const subnetElement = getElement('serverSubnet');
+        const mtuElement = getElement('serverMTU');
+        const dnsElement = getElement('serverDNS');
+        const obfuscationElement = getElement('enableObfuscation');
+        const awg2Element = getElement('enableAwg2');
+        const autoStartElement = getElement('autoStart');
 
         const formData = {
             name: nameElement ? nameElement.value.trim() : 'New Server',
@@ -587,41 +536,41 @@ class AmneziaApp {
         if (formData.obfuscation) {
             if (formData.obfuscation && formData.awg2) {
                 formData.obfuscation_params = {
-                    Jc: parseInt(this.getElement('paramJc')?.value || '8'),
-                    Jmin: parseInt(this.getElement('paramJmin')?.value || '8'),
-                    Jmax: parseInt(this.getElement('paramJmax')?.value || '80'),
-                    S1: parseInt(this.getElement('paramS1')?.value || '50'),
-                    S2: parseInt(this.getElement('paramS2')?.value || '60'),
-                    S3: parseInt(this.getElement('paramS3')?.value || '0'),
-                    S4: parseInt(this.getElement('paramS4')?.value || '0'),
+                    Jc: parseInt(getElement('paramJc')?.value || '8'),
+                    Jmin: parseInt(getElement('paramJmin')?.value || '8'),
+                    Jmax: parseInt(getElement('paramJmax')?.value || '80'),
+                    S1: parseInt(getElement('paramS1')?.value || '50'),
+                    S2: parseInt(getElement('paramS2')?.value || '60'),
+                    S3: parseInt(getElement('paramS3')?.value || '0'),
+                    S4: parseInt(getElement('paramS4')?.value || '0'),
                     // Handle H1-H4 as strings to support ranges
-                    H1: this.getElement('paramH1')?.value || '1000',
-                    H2: this.getElement('paramH2')?.value || '2000',
-                    H3: this.getElement('paramH3')?.value || '3000',
-                    H4: this.getElement('paramH4')?.value || '4000',
+                    H1: getElement('paramH1')?.value || '1000',
+                    H2: getElement('paramH2')?.value || '2000',
+                    H3: getElement('paramH3')?.value || '3000',
+                    H4: getElement('paramH4')?.value || '4000',
                 };
             } else {
                 formData.obfuscation_params = {
-                    Jc: parseInt(this.getElement('paramJc')?.value || '8'),
-                    Jmin: parseInt(this.getElement('paramJmin')?.value || '8'),
-                    Jmax: parseInt(this.getElement('paramJmax')?.value || '80'),
-                    S1: parseInt(this.getElement('paramS1')?.value || '50'),
-                    S2: parseInt(this.getElement('paramS2')?.value || '60'),
+                    Jc: parseInt(getElement('paramJc')?.value || '8'),
+                    Jmin: parseInt(getElement('paramJmin')?.value || '8'),
+                    Jmax: parseInt(getElement('paramJmax')?.value || '80'),
+                    S1: parseInt(getElement('paramS1')?.value || '50'),
+                    S2: parseInt(getElement('paramS2')?.value || '60'),
                     // Handle H1-H4 as strings to support ranges
-                    H1: this.getElement('paramH1')?.value || '1000',
-                    H2: this.getElement('paramH2')?.value || '2000',
-                    H3: this.getElement('paramH3')?.value || '3000',
-                    H4: this.getElement('paramH4')?.value || '4000',
+                    H1: getElement('paramH1')?.value || '1000',
+                    H2: getElement('paramH2')?.value || '2000',
+                    H3: getElement('paramH3')?.value || '3000',
+                    H4: getElement('paramH4')?.value || '4000',
                 };
             }
 
             const obfErrors = this.validateObfuscationParamsJS(formData.obfuscation_params, formData.mtu);
             if (obfErrors.length > 0) {
                 // You can display all errors in a single error element, or one by one
-                this.showError('obfuscationError', obfErrors.join(' '));
+                showError('obfuscationError', obfErrors.join(' '));
                 return;
             } else {
-                this.hideError('obfuscationError');
+                hideError('obfuscationError');
             }
         }
 
@@ -649,7 +598,7 @@ class AmneziaApp {
             this.showFormStatus(`Server "${server.name}" created successfully!`, 'success');
 
             // Reset form
-            const serverForm = this.getElement('serverForm');
+            const serverForm = getElement('serverForm');
             if (serverForm) serverForm.reset();
 
             this.loadServers();
@@ -665,7 +614,7 @@ class AmneziaApp {
     }
 
     setCreateButtonState(loading) {
-        const createButton = this.getElement('createButton');
+        const createButton = getElement('createButton');
         if (createButton) {
             createButton.disabled = loading;
             createButton.textContent = loading ? 'Creating...' : 'Create Server';
@@ -682,7 +631,7 @@ class AmneziaApp {
         fetch('/api/system/status')
             .then(response => response.json())
             .then(data => {
-                this.updatePublicIp(data.public_ip);
+                updatePublicIp(data.public_ip);
             })
             .catch(error => {
                 console.error('Error loading public IP:', error);
@@ -703,7 +652,7 @@ class AmneziaApp {
     }
 
     renderServers(servers) {
-        const serversList = this.getElement('serversList');
+        const serversList = getElement('serversList');
         if (!serversList) return;
 
         if (servers.length === 0) {
@@ -893,7 +842,7 @@ class AmneziaApp {
             fetch(`/api/servers/${serverId}/clients`).then(res => res.json()),
             fetch(`/api/servers/${serverId}/traffic`).then(res => res.ok ? res.json() : {})
         ]).then(([clients, traffic]) => {
-            const clientsContainer = this.getElement(`clients-${serverId}`);
+            const clientsContainer = getElement(`clients-${serverId}`);
             if (clientsContainer) {
                 clientsContainer.innerHTML = this.renderServerClients(serverId, clients, traffic);
             }
@@ -903,7 +852,7 @@ class AmneziaApp {
     }
 
     showServerError(message) {
-        const serversList = this.getElement('serversList');
+        const serversList = getElement('serversList');
         if (serversList) {
             serversList.innerHTML = `
                 <div class="text-center py-8 text-red-500">
@@ -1190,7 +1139,7 @@ class AmneziaApp {
         const applyISettings = document.getElementById('applyISettings').checked;
         
         if (!clientName) {
-            this.showTempMessage('Client name is required', 'error');
+            showTempMessage('Client name is required', 'error');
             return;
         }
 
@@ -1265,13 +1214,13 @@ class AmneziaApp {
                 if (suspensionResult && !suspensionResult.ok) {
                     console.warn('Failed to set suspension time');
                 }
-                this.showTempMessage('Client updated successfully!', 'success');
+                showTempMessage('Client updated successfully!', 'success');
                 this.closeClientModal();
                 this.loadServers();
             })
             .catch(error => {
                 console.error('Error saving client:', error);
-                this.showTempMessage(`Error saving client: ${error.message}`, 'error');
+                showTempMessage(`Error saving client: ${error.message}`, 'error');
             });
         } else {
             // Create new client
@@ -1290,13 +1239,13 @@ class AmneziaApp {
                 if (result.error) {
                     throw new Error(result.error);
                 }
-                this.showTempMessage('Client added successfully!', 'success');
+                showTempMessage('Client added successfully!', 'success');
                 this.closeClientModal();
                 this.loadServers();
             })
             .catch(error => {
                 console.error('Error saving client:', error);
-                this.showTempMessage(`Error saving client: ${error.message}`, 'error');
+                showTempMessage(`Error saving client: ${error.message}`, 'error');
             });
         }
     }
@@ -1324,12 +1273,12 @@ class AmneziaApp {
                 if (client) {
                     this.showClientModal(serverId, client);
                 } else {
-                    this.showTempMessage('Client not found', 'error');
+                    showTempMessage('Client not found', 'error');
                 }
             })
             .catch(error => {
                 console.error('Error fetching client:', error);
-                this.showTempMessage('Error loading client: ' + error.message, 'error');
+                showTempMessage('Error loading client: ' + error.message, 'error');
             });
     }
 
@@ -1343,7 +1292,7 @@ class AmneziaApp {
                 if (data.error) {
                     throw new Error(data.error);
                 }
-                this.showTempMessage('Client suspended successfully', 'success');
+                showTempMessage('Client suspended successfully', 'success');
                 this.loadServers();
             })
             .catch(error => {
@@ -1363,7 +1312,7 @@ class AmneziaApp {
                 if (data.error) {
                     throw new Error(data.error);
                 }
-                this.showTempMessage('Client activated successfully', 'success');
+                showTempMessage('Client activated successfully', 'success');
                 this.loadServers();
             })
             .catch(error => {
@@ -1378,22 +1327,22 @@ class AmneziaApp {
         .then(response => response.json())
         .then(data => {
             // Установка значений в поля формы
-            const mtuInput = this.getElement('serverMTU');
+            const mtuInput = getElement('serverMTU');
             if (mtuInput && data.mtu) {
                 mtuInput.value = data.mtu;
             }
             
-            const subnetInput = this.getElement('serverSubnet');
+            const subnetInput = getElement('serverSubnet');
             if (subnetInput && data.subnet) {
                 subnetInput.value = data.subnet;
             }
             
-            const portInput = this.getElement('serverPort');
+            const portInput = getElement('serverPort');
             if (portInput && data.port) {
                 portInput.value = data.port;
             }
             
-            const dnsInput = this.getElement('serverDNS');
+            const dnsInput = getElement('serverDNS');
             if (dnsInput && data.dns) {
                 dnsInput.value = data.dns;
             }
@@ -1816,7 +1765,7 @@ class AmneziaApp {
             }
         } catch (error) {
             console.error('Error fetching config for QR code:', error);
-            this.showTempMessage('Failed to generate QR code: ' + error.message, 'error');
+            showTempMessage('Failed to generate QR code: ' + error.message, 'error');
             this.closeQRModal();
         }
     }
@@ -1936,15 +1885,15 @@ class AmneziaApp {
             
             try {
                 navigator.clipboard.writeText(configTextArea.value).then(() => {
-                    this.showTempMessage('Configuration copied to clipboard!', 'success');
+                    showTempMessage('Configuration copied to clipboard!', 'success');
                 }).catch(err => {
                     // Fallback for older browsers
                     document.execCommand('copy');
-                    this.showTempMessage('Configuration copied to clipboard!', 'success');
+                    showTempMessage('Configuration copied to clipboard!', 'success');
                 });
             } catch (err) {
                 document.execCommand('copy');
-                this.showTempMessage('Configuration copied to clipboard!', 'success');
+                showTempMessage('Configuration copied to clipboard!', 'success');
             }
         }
     }
@@ -1961,26 +1910,13 @@ class AmneziaApp {
 
         navigator.clipboard.writeText(text).then(() => {
             // Show a temporary notification
-            this.showTempMessage('Configuration copied to clipboard!', 'success');
+            showTempMessage('Configuration copied to clipboard!', 'success');
         }).catch(err => {
             console.error('Failed to copy: ', err);
-            this.showTempMessage('Failed to copy to clipboard', 'error');
+            showTempMessage('Failed to copy to clipboard', 'error');
         });
     }
 
-    showTempMessage(message, type) {
-        const messageDiv = document.createElement('div');
-        messageDiv.className = `fixed top-4 right-4 px-4 py-2 rounded text-white text-sm z-50 ${
-            type === 'success' ? 'bg-green-500' : 'bg-red-500'
-        }`;
-        messageDiv.textContent = message;
-
-        document.body.appendChild(messageDiv);
-
-        setTimeout(() => {
-            messageDiv.remove();
-        }, 3000);
-    }
 
     createLogsSection() {
         const mainContainer = document.querySelector('.container.mx-auto.p-4');
@@ -2010,8 +1946,8 @@ class AmneziaApp {
     }
 
     toggleLogsSection() {
-        const container = this.getElement('logsContainer');
-        const icon = this.getElement('logsToggleIcon');
+        const container = getElement('logsContainer');
+        const icon = getElement('logsToggleIcon');
         
         if (container && icon) {
             if (container.classList.contains('hidden')) {
@@ -2034,7 +1970,7 @@ class AmneziaApp {
             })
             .catch(error => {
                 console.error('Error loading logs list:', error);
-                const tabsContainer = this.getElement('logTabs');
+                const tabsContainer = getElement('logTabs');
                 if (tabsContainer) {
                     tabsContainer.innerHTML = '<div class="text-red-500 p-4">Error loading logs</div>';
                 }
@@ -2042,8 +1978,8 @@ class AmneziaApp {
     }
 
     renderLogTabs(logs) {
-        const tabsContainer = this.getElement('logTabs');
-        const contentContainer = this.getElement('logContent');
+        const tabsContainer = getElement('logTabs');
+        const contentContainer = getElement('logContent');
         
         if (!tabsContainer || !contentContainer) return;
         
@@ -2063,7 +1999,7 @@ class AmneziaApp {
                     <button class="log-tab px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${index === 0 ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
                             data-log-index="${index}"
                             onclick="amneziaApp.switchLogTab(${index})">
-                        ${this.escapeHtml(log.name)}
+                        ${escapeHtml(log.name)}
                         <span class="ml-1 text-xs text-gray-400">(${log.size_human})</span>
                     </button>
                 `).join('')}
@@ -2111,7 +2047,7 @@ class AmneziaApp {
     }
 
     loadLogContent(logPath) {
-        const contentContainer = this.getElement('logContent');
+        const contentContainer = getElement('logContent');
         if (!contentContainer) return;
         
         // Show loading indicator
@@ -2160,7 +2096,7 @@ class AmneziaApp {
                 continue;
             }
             
-            let formattedLine = this.escapeHtml(line);
+            let formattedLine = escapeHtml(line);
             
             // Color coding based on log type
             if (logType === 'error') {
@@ -2198,11 +2134,6 @@ class AmneziaApp {
         return formattedLines.join('\n');
     }
 
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
 
     reloadCurrentLog() {
         if (this.availableLogs && this.currentLogIndex !== undefined) {
@@ -2220,4 +2151,5 @@ class AmneziaApp {
 }
 
 // Initialize the application
-const amneziaApp = new AmneziaApp();
+const app = new AmneziaApp();
+window.amneziaApp = app;

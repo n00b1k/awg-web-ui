@@ -1,6 +1,6 @@
 import os
 
-APP_VERSION = '1.2.8'
+APP_VERSION = '1.3.1'
 
 # Get the absolute path to the current directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

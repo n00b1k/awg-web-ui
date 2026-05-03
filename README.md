@@ -172,7 +172,7 @@ Official docker image repository: https://hub.docker.com/r/n00b1k/awg-web-ui
 
 ### Docker Run Example
 ```bash
-docker run --rm n00b1k/awg-web-ui:1.2.4 gph 'password'
+docker run --rm n00b1k/awg-web-ui:1.2.9 gph 'password'
 ```
 
 ```bash
@@ -194,7 +194,7 @@ docker run -d \
   --sysctl net.ipv4.conf.all.src_valid_mark=1 \
   --device /dev/net/tun \
   --restart unless-stopped \
-  n00b1k/awg-web-ui:1.2.4
+  n00b1k/awg-web-ui:1.2.9
 ```
 
 ## Protection by IP address
