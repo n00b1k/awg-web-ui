@@ -4,7 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AmneziaWG Web UI - Login</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico" />
+    <!-- tailwindcss -->
+    <link rel="stylesheet" href="/static/css/output.css" />
     <style>
       body {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -18,23 +20,13 @@
         <p class="text-gray-600 mt-2">Please login to continue</p>
       </div>
 
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %} {% for category, message in messages %}
-      <div
-        class="mb-4 p-3 rounded {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}"
-      >
-        {{ message }}
-      </div>
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if messages %} {% for category, message in messages %}
+      <div class="mb-4 p-3 rounded {% if category == 'error' %}bg-red-100 text-red-700{% else %}bg-blue-100 text-blue-700{% endif %}">{{ message }}</div>
       {% endfor %} {% endif %} {% endwith %}
 
       <form method="POST" action="{{ url_for('login') }}">
         <div class="mb-4">
-          <label
-            class="block text-gray-700 text-sm font-bold mb-2"
-            for="username"
-          >
-            Username
-          </label>
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="username"> Username </label>
           <input
             type="text"
             id="username"
@@ -46,12 +38,7 @@
         </div>
 
         <div class="mb-6">
-          <label
-            class="block text-gray-700 text-sm font-bold mb-2"
-            for="password"
-          >
-            Password
-          </label>
+          <label class="block text-gray-700 text-sm font-bold mb-2" for="password"> Password </label>
           <input
             type="password"
             id="password"
@@ -62,22 +49,11 @@
           />
         </div>
 
-        <button
-          type="submit"
-          class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200"
-        >
-          Login
-        </button>
+        <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-200">Login</button>
       </form>
 
       <div class="mt-6 text-center text-sm text-gray-500">
-        <a
-          href="https://github.com/n00b1k/awg-web-ui"
-          target="_blank"
-          class="hover:text-gray-700"
-        >
-          © AmneziaWG Web UI. Version {{ version }}
-        </a>
+        <a href="https://github.com/n00b1k/awg-web-ui" target="_blank" class="hover:text-gray-700"> © AmneziaWG Web UI. Version {{ version }} </a>
       </div>
     </div>
   </body>
