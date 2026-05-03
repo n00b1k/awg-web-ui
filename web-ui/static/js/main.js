@@ -22,16 +22,14 @@ class AmneziaApp {
 
     logout() {
         if (confirm('Are you sure you want to logout?')) {
-            if (confirm('Are you sure you want to logout?')) {
-                // Отключаем WebSocket перед выходом
-                if (this.socket && this.socket.connected) {
-                    this.socket.disconnect();
-                }
-                
-                // Перенаправляем на logout
-                window.location.href = '/logout';
+            // Отключаем WebSocket перед выходом
+            if (this.socket && this.socket.connected) {
+                this.socket.disconnect();
             }
-    }
+            
+            // Перенаправляем на logout
+            window.location.href = '/logout';
+        }
 }
 
     toggleForm() {
