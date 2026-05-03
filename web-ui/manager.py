@@ -899,7 +899,7 @@ PersistentKeepalive = 25
     def simulate_server_operation(self, server_id, status):
         """Simulate server operation with status updates"""
         time.sleep(2)
-        socketio.emit('server_status', {
+        self.socketio.emit('server_status', {
             'server_id': server_id,
             'status': status
         })
