@@ -1,5 +1,6 @@
 // AmneziaWG Web UI - Main Application JavaScript
-import { getElement, showTempMessage, updateStatus, updatePublicIp, showError, hideError, escapeHtml } from './ui.js';
+import * as ui from './ui.js';
+import * as api from './api.js'
 
 
 class AmneziaApp {
@@ -33,8 +34,8 @@ class AmneziaApp {
 }
 
     toggleForm() {
-        const container = getElement('serverFormContainer');
-        const icon = getElement('toggleIcon');
+        const container = ui.getElement('serverFormContainer');
+        const icon = ui.getElement('toggleIcon');
         
         if (container && icon) {
             if (container.classList.contains('hidden')) {
@@ -49,7 +50,7 @@ class AmneziaApp {
 
     setupEventListeners() {
         // Server form submission
-        const serverForm = getElement('serverForm');
+        const serverForm = ui.getElement('serverForm');
         if (serverForm) {
             serverForm.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -58,7 +59,7 @@ class AmneziaApp {
         }
 
         // Random parameters button
-        const randomParamsBtn = getElement('randomParamsBtn');
+        const randomParamsBtn = ui.getElement('randomParamsBtn');
         if (randomParamsBtn) {
             randomParamsBtn.addEventListener('click', () => {
                 this.generateRandomParams();
@@ -66,7 +67,7 @@ class AmneziaApp {
         }
 
         // Refresh IP button
-        const refreshIpBtn = getElement('refreshIpBtn');
+        const refreshIpBtn = ui.getElement('refreshIpBtn');
         if (refreshIpBtn) {
             refreshIpBtn.addEventListener('click', () => {
                 this.refreshPublicIp();
@@ -74,7 +75,7 @@ class AmneziaApp {
         }
 
         // Obfuscation toggle
-        const obfuscationCheckbox = getElement('enableObfuscation');
+        const obfuscationCheckbox = ui.getElement('enableObfuscation');
         if (obfuscationCheckbox) {
             obfuscationCheckbox.addEventListener('change', (e) => {
                 this.toggleObfuscationParams(e.target.checked);
@@ -83,7 +84,7 @@ class AmneziaApp {
             this.toggleObfuscationParams(obfuscationCheckbox.checked);
         }
 
-        const awg2Checkbox = getElement('enableAwg2');
+        const awg2Checkbox = ui.getElement('enableAwg2');
         if (awg2Checkbox) {
             awg2Checkbox.addEventListener('change', (e) => {
                 this.toggleAwg2Fields(e.target.checked);
@@ -95,7 +96,7 @@ class AmneziaApp {
         this.setupFormValidation();
         
         // Add toggle button listener
-        const toggleBtn = getElement('toggleFormBtn');
+        const toggleBtn = ui.getElement('toggleFormBtn');
         if (toggleBtn) {
             toggleBtn.addEventListener('click', () => {
                 this.toggleForm();
@@ -104,32 +105,32 @@ class AmneziaApp {
     }
 
     setupFormValidation() {
-        const nameElement = getElement('serverName');
-        const portElement = getElement('serverPort');
-        const subnetElement = getElement('serverSubnet');
+        const nameElement = ui.getElement('serverName');
+        const portElement = ui.getElement('serverPort');
+        const subnetElement = ui.getElement('serverSubnet');
         
         if (nameElement) {
             nameElement.addEventListener('input', () => {
-                hideError('nameError');
+                ui.hideError('nameError');
             });
         }
         
         if (portElement) {
             portElement.addEventListener('input', () => {
-                hideError('portError');
+                ui.hideError('portError');
             });
         }
         
         if (subnetElement) {
             subnetElement.addEventListener('input', () => {
-                hideError('subnetError');
+                ui.hideError('subnetError');
             });
         }
     }
 
 
     toggleObfuscationParams(show) {
-        const obfuscationParams = getElement('obfuscationParams');
+        const obfuscationParams = ui.getElement('obfuscationParams');
         if (obfuscationParams) {
             obfuscationParams.style.display = show ? 'block' : 'none';
         }
@@ -150,7 +151,7 @@ class AmneziaApp {
         if (trafficData.client_traffic) {
             for (const serverId in trafficData.client_traffic) {
                 if (trafficData.client_traffic.hasOwnProperty(serverId)) {
-                    const clientsContainer = getElement(`clients-${serverId}`);
+                    const clientsContainer = ui.getElement(`clients-${serverId}`);
                     if (clientsContainer) {
                         const serverTraffic = trafficData.client_traffic[serverId];
                         
@@ -230,8 +231,7 @@ class AmneziaApp {
     }
 
     loadAllServerTraffic() {
-        fetch('/api/servers/traffic')
-            .then(response => response.json())
+        api.getAllServersTraffic()
             .then(trafficData => {
                 for (const serverId in trafficData) {
                     if (trafficData.hasOwnProperty(serverId)) {
@@ -272,23 +272,23 @@ class AmneziaApp {
 
         this.socket.on('connect', () => {
             console.log("✅ Connected to server via WebSocket");
-            updateStatus('Connected to AmneziaWG Web UI');
+            ui.updateStatus('Connected to AmneziaWG Web UI');
         });
 
         this.socket.on('disconnect', () => {
             console.log("❌ Disconnected from server");
-            updateStatus('Disconnected from AmneziaWG Web UI');
+            ui.updateStatus('Disconnected from AmneziaWG Web UI');
         });
 
         this.socket.on('connect_error', (error) => {
             console.error("❌ WebSocket connection error:", error);
-            updateStatus('Connection error - retrying...');
+            ui.updateStatus('Connection error - retrying...');
         });
 
         this.socket.on('status', (data) => {
             console.log("Status update:", data);
             if (data.public_ip) {
-                updatePublicIp(data.public_ip);
+                ui.updatePublicIp(data.public_ip);
             }
         });
 
@@ -306,28 +306,25 @@ class AmneziaApp {
 
 
     refreshPublicIp() {
-        fetch('/api/system/refresh-ip')
-            .then(response => response.json())
+        api.refreshPublicIp()
             .then(data => {
-                updatePublicIp(data.public_ip);
+                ui.updatePublicIp(data.public_ip);
                 this.loadServers();
             })
-            .catch(error => {
-                console.error('Error refreshing IP:', error);
-            });
+            .catch(error => console.error('Error refreshing IP:', error));
     }
 
     generateRandomParams() {
         // Generate random values within recommended ranges
-        const jcElement = getElement('paramJc');
-        const s1Element = getElement('paramS1');
-        const s2Element = getElement('paramS2');
-        const s3Element = getElement('paramS3');
-        const s4Element = getElement('paramS4');
-        const h1Element = getElement('paramH1');
-        const h2Element = getElement('paramH2');
-        const h3Element = getElement('paramH3');
-        const h4Element = getElement('paramH4');
+        const jcElement = ui.getElement('paramJc');
+        const s1Element = ui.getElement('paramS1');
+        const s2Element = ui.getElement('paramS2');
+        const s3Element = ui.getElement('paramS3');
+        const s4Element = ui.getElement('paramS4');
+        const h1Element = ui.getElement('paramH1');
+        const h2Element = ui.getElement('paramH2');
+        const h3Element = ui.getElement('paramH3');
+        const h4Element = ui.getElement('paramH4');
         
         if (jcElement) jcElement.value = Math.floor(Math.random() * 9) + 4; // 4-12
         if (s1Element) s1Element.value = Math.floor(Math.random() * 136) + 15; // 15-150
@@ -349,7 +346,7 @@ class AmneziaApp {
     }
 
     showFormStatus(message, type) {
-        const statusDiv = getElement('formStatus');
+        const statusDiv = ui.getElement('formStatus');
         if (statusDiv) {
             statusDiv.textContent = message;
             statusDiv.className = `text-sm mt-2 ${type === 'success' ? 'text-green-600' : 'text-red-600'}`;
@@ -395,58 +392,58 @@ class AmneziaApp {
         let isValid = true;
 
         // Reset errors
-        hideError('nameError');
-        hideError('portError');
-        hideError('subnetError');
-        hideError('mtuError');
-        hideError('dnsError');
+        ui.hideError('nameError');
+        ui.hideError('portError');
+        ui.hideError('subnetError');
+        ui.hideError('mtuError');
+        ui.hideError('dnsError');
 
         // Validate name
-        const nameElement = getElement('serverName');
+        const nameElement = ui.getElement('serverName');
         const name = nameElement ? nameElement.value.trim() : '';
         if (!name) {
-            showError('nameError', 'Server name is required');
+            ui.showError('nameError', 'Server name is required');
             isValid = false;
         }
 
         // Validate port
-        const portElement = getElement('serverPort');
+        const portElement = ui.getElement('serverPort');
         const port = portElement ? parseInt(portElement.value) : 0;
         if (!port || port < 1 || port > 65535) {
-            showError('portError', 'Port must be between 1 and 65535');
+            ui.showError('portError', 'Port must be between 1 and 65535');
             isValid = false;
         }
 
         // Validate subnet
-        const subnetElement = getElement('serverSubnet');
+        const subnetElement = ui.getElement('serverSubnet');
         const subnet = subnetElement ? subnetElement.value : '';
         const subnetRegex = /^(\d{1,3}\.){3}\d{1,3}\/\d{1,2}$/;
         if (!subnet || !subnetRegex.test(subnet)) {
-            showError('subnetError', 'Valid subnet is required (e.g., 10.0.0.0/24)');
+            ui.showError('subnetError', 'Valid subnet is required (e.g., 10.0.0.0/24)');
             isValid = false;
         }
 
         // Validate MTU
-        const mtuElement = getElement('serverMTU');
+        const mtuElement = ui.getElement('serverMTU');
         const mtu = mtuElement ? parseInt(mtuElement.value) : 0;
         if (!mtu || mtu < 1280 || mtu > 1440) {
-            showError('mtuError', 'MTU must be between 1280 and 1440');
+            ui.showError('mtuError', 'MTU must be between 1280 and 1440');
             isValid = false;
         }
 
         // Validate DNS
-        const dnsElement = getElement('serverDNS');
+        const dnsElement = ui.getElement('serverDNS');
         const dns = dnsElement ? dnsElement.value.trim() : '';
         const dnsServers = dns.split(',').map(s => s.trim()).filter(s => s);
         const ipRegex = /^(\d{1,3}\.){3}\d{1,3}$/;
 
         if (!dns || dnsServers.length === 0) {
-            showError('dnsError', 'At least one DNS server is required');
+            ui.showError('dnsError', 'At least one DNS server is required');
             isValid = false;
         } else {
             for (const dnsServer of dnsServers) {
                 if (!ipRegex.test(dnsServer)) {
-                    showError('dnsError', `Invalid DNS server IP: ${dnsServer}`);
+                    ui.showError('dnsError', `Invalid DNS server IP: ${dnsServer}`);
                     isValid = false;
                     break;
                 }
@@ -458,39 +455,39 @@ class AmneziaApp {
 
     // Add DNS input validation listener
     setupFormValidation() {
-        const nameElement = getElement('serverName');
-        const portElement = getElement('serverPort');
-        const subnetElement = getElement('serverSubnet');
-        const mtuElement = getElement('serverMTU');
-        const dnsElement = getElement('serverDNS');
+        const nameElement = ui.getElement('serverName');
+        const portElement = ui.getElement('serverPort');
+        const subnetElement = ui.getElement('serverSubnet');
+        const mtuElement = ui.getElement('serverMTU');
+        const dnsElement = ui.getElement('serverDNS');
 
         if (nameElement) {
             nameElement.addEventListener('input', () => {
-                hideError('nameError');
+                ui.hideError('nameError');
             });
         }
 
         if (portElement) {
             portElement.addEventListener('input', () => {
-                hideError('portError');
+                ui.hideError('portError');
             });
         }
 
         if (subnetElement) {
             subnetElement.addEventListener('input', () => {
-                hideError('subnetError');
+                ui.hideError('subnetError');
             });
         }
 
         if (mtuElement) {
             mtuElement.addEventListener('input', () => {
-                hideError('mtuError');
+                ui.hideError('mtuError');
             });
         }
 
         if (dnsElement) {
             dnsElement.addEventListener('input', () => {
-                hideError('dnsError');
+                ui.hideError('dnsError');
             });
         }
     }
@@ -506,15 +503,15 @@ class AmneziaApp {
         }
 
         // Safely get form values with fallbacks
-        const nameElement = getElement('serverName');
-        const publicIpElement = getElement('serverPublicIp');
-        const portElement = getElement('serverPort');
-        const subnetElement = getElement('serverSubnet');
-        const mtuElement = getElement('serverMTU');
-        const dnsElement = getElement('serverDNS');
-        const obfuscationElement = getElement('enableObfuscation');
-        const awg2Element = getElement('enableAwg2');
-        const autoStartElement = getElement('autoStart');
+        const nameElement = ui.getElement('serverName');
+        const publicIpElement = ui.getElement('serverPublicIp');
+        const portElement = ui.getElement('serverPort');
+        const subnetElement = ui.getElement('serverSubnet');
+        const mtuElement = ui.getElement('serverMTU');
+        const dnsElement = ui.getElement('serverDNS');
+        const obfuscationElement = ui.getElement('enableObfuscation');
+        const awg2Element = ui.getElement('enableAwg2');
+        const autoStartElement = ui.getElement('autoStart');
 
         const formData = {
             name: nameElement ? nameElement.value.trim() : 'New Server',
@@ -534,85 +531,64 @@ class AmneziaApp {
         if (formData.obfuscation) {
             if (formData.obfuscation && formData.awg2) {
                 formData.obfuscation_params = {
-                    Jc: parseInt(getElement('paramJc')?.value || '8'),
-                    Jmin: parseInt(getElement('paramJmin')?.value || '8'),
-                    Jmax: parseInt(getElement('paramJmax')?.value || '80'),
-                    S1: parseInt(getElement('paramS1')?.value || '50'),
-                    S2: parseInt(getElement('paramS2')?.value || '60'),
-                    S3: parseInt(getElement('paramS3')?.value || '0'),
-                    S4: parseInt(getElement('paramS4')?.value || '0'),
+                    Jc: parseInt(ui.getElement('paramJc')?.value || '8'),
+                    Jmin: parseInt(ui.getElement('paramJmin')?.value || '8'),
+                    Jmax: parseInt(ui.getElement('paramJmax')?.value || '80'),
+                    S1: parseInt(ui.getElement('paramS1')?.value || '50'),
+                    S2: parseInt(ui.getElement('paramS2')?.value || '60'),
+                    S3: parseInt(ui.getElement('paramS3')?.value || '0'),
+                    S4: parseInt(ui.getElement('paramS4')?.value || '0'),
                     // Handle H1-H4 as strings to support ranges
-                    H1: getElement('paramH1')?.value || '1000',
-                    H2: getElement('paramH2')?.value || '2000',
-                    H3: getElement('paramH3')?.value || '3000',
-                    H4: getElement('paramH4')?.value || '4000',
+                    H1: ui.getElement('paramH1')?.value || '1000',
+                    H2: ui.getElement('paramH2')?.value || '2000',
+                    H3: ui.getElement('paramH3')?.value || '3000',
+                    H4: ui.getElement('paramH4')?.value || '4000',
                 };
             } else {
                 formData.obfuscation_params = {
-                    Jc: parseInt(getElement('paramJc')?.value || '8'),
-                    Jmin: parseInt(getElement('paramJmin')?.value || '8'),
-                    Jmax: parseInt(getElement('paramJmax')?.value || '80'),
-                    S1: parseInt(getElement('paramS1')?.value || '50'),
-                    S2: parseInt(getElement('paramS2')?.value || '60'),
+                    Jc: parseInt(ui.getElement('paramJc')?.value || '8'),
+                    Jmin: parseInt(ui.getElement('paramJmin')?.value || '8'),
+                    Jmax: parseInt(ui.getElement('paramJmax')?.value || '80'),
+                    S1: parseInt(ui.getElement('paramS1')?.value || '50'),
+                    S2: parseInt(ui.getElement('paramS2')?.value || '60'),
                     // Handle H1-H4 as strings to support ranges
-                    H1: getElement('paramH1')?.value || '1000',
-                    H2: getElement('paramH2')?.value || '2000',
-                    H3: getElement('paramH3')?.value || '3000',
-                    H4: getElement('paramH4')?.value || '4000',
+                    H1: ui.getElement('paramH1')?.value || '1000',
+                    H2: ui.getElement('paramH2')?.value || '2000',
+                    H3: ui.getElement('paramH3')?.value || '3000',
+                    H4: ui.getElement('paramH4')?.value || '4000',
                 };
             }
 
             const obfErrors = this.validateObfuscationParamsJS(formData.obfuscation_params, formData.mtu);
             if (obfErrors.length > 0) {
                 // You can display all errors in a single error element, or one by one
-                showError('obfuscationError', obfErrors.join(' '));
+                ui.showError('obfuscationError', obfErrors.join(' '));
                 return;
             } else {
-                hideError('obfuscationError');
+                ui.hideError('obfuscationError');
             }
         }
 
         // Disable button and show loading
         this.setCreateButtonState(true);
 
-        fetch('/api/servers', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                },
-            body: JSON.stringify(formData)
-        })
-        .then(response => {
-            console.log("Response received:", response.status);
-            if (!response.ok) {
-                return response.json().then(err => {
-                    throw new Error(err.error || `HTTP ${response.status}`);
-                });
-            }
-            return response.json();
-        })
-        .then(server => {
-            console.log("Server created successfully:", server);
-            this.showFormStatus(`Server "${server.name}" created successfully!`, 'success');
-
-            // Reset form
-            const serverForm = getElement('serverForm');
-            if (serverForm) serverForm.reset();
-
-            this.loadServers();
-        })
-        .catch(error => {
-            console.error('Error creating server:', error);
-            this.showFormStatus('Error creating server: ' + error.message, 'error');
-        })
-        .finally(() => {
-            // Re-enable button
-            this.setCreateButtonState(false);
-        });
+        api.createServer(formData)
+            .then(server => {
+                this.showFormStatus(`Server "${server.name}" created successfully!`, 'success');
+                const serverForm = ui.getElement('serverForm');
+                if (serverForm) serverForm.reset();
+                this.loadServers();
+            })
+            .catch(error => {
+                this.showFormStatus('Error creating server: ' + error.message, 'error');
+            })
+            .finally(() => {
+                this.setCreateButtonState(false);
+            });
     }
 
     setCreateButtonState(loading) {
-        const createButton = getElement('createButton');
+        const createButton = ui.getElement('createButton');
         if (createButton) {
             createButton.disabled = loading;
             createButton.textContent = loading ? 'Creating...' : 'Create Server';
@@ -626,21 +602,15 @@ class AmneziaApp {
     }
 
     loadPublicIp() {
-        fetch('/api/system/status')
-            .then(response => response.json())
-            .then(data => {
-                updatePublicIp(data.public_ip);
-            })
-            .catch(error => {
-                console.error('Error loading public IP:', error);
-            });
+        api.getSystemStatus()
+            .then(data => { ui.updatePublicIp(data.public_ip); })
+            .catch(error => console.error(error));
     }
 
     loadServers() {
-        fetch('/api/servers')
-            .then(response => response.json())
+        api.getServers()
             .then(servers => {
-                this.servers = servers; // Store for later use
+                this.servers = servers;
                 this.renderServers(servers);
             })
             .catch(error => {
@@ -650,7 +620,7 @@ class AmneziaApp {
     }
 
     renderServers(servers) {
-        const serversList = getElement('serversList');
+        const serversList = ui.getElement('serversList');
         if (!serversList) return;
 
         if (servers.length === 0) {
@@ -837,10 +807,10 @@ class AmneziaApp {
 
     loadServerClients(serverId) {
         Promise.all([
-            fetch(`/api/servers/${serverId}/clients`).then(res => res.json()),
-            fetch(`/api/servers/${serverId}/traffic`).then(res => res.ok ? res.json() : {})
+            api.getServerClients(serverId),
+            api.getServerTraffic(serverId)
         ]).then(([clients, traffic]) => {
-            const clientsContainer = getElement(`clients-${serverId}`);
+            const clientsContainer = ui.getElement(`clients-${serverId}`);
             if (clientsContainer) {
                 clientsContainer.innerHTML = this.renderServerClients(serverId, clients, traffic);
             }
@@ -850,7 +820,7 @@ class AmneziaApp {
     }
 
     showServerError(message) {
-        const serversList = getElement('serversList');
+        const serversList = ui.getElement('serversList');
         if (serversList) {
             serversList.innerHTML = `
                 <div class="text-center py-8 text-red-500">
@@ -860,10 +830,31 @@ class AmneziaApp {
         }
     }
 
+
+    startServer(serverId) {
+        api.startServer(serverId)
+            .then(() => this.loadServers())
+            .catch(error => {
+                console.error('Error starting server:', error);
+                alert('Error starting server: ' + error.message);
+            });
+    }
+
+
+    stopServer(serverId) {
+        api.stopServer(serverId)
+            .then(() => this.loadServers())
+            .catch(error => {
+                console.error('Error stopping server:', error);
+                alert('Error stopping server: ' + error.message);
+            });
+    }
+
+
     // Server management methods
     deleteServer(serverId) {
         if (confirm('Are you sure you want to delete this server and all its clients?')) {
-            fetch(`/api/servers/${serverId}`, { method: 'DELETE' })
+            api.deleteServer(serverId)
                 .then(() => this.loadServers())
                 .catch(error => {
                     console.error('Error deleting server:', error);
@@ -874,7 +865,7 @@ class AmneziaApp {
 
     deleteClient(serverId, clientId) {
         if (confirm('Are you sure you want to delete this client?')) {
-            fetch(`/api/servers/${serverId}/clients/${clientId}`, { method: 'DELETE' })
+            api.deleteClient(serverId, clientId)
                 .then(() => this.loadServers())
                 .catch(error => {
                     console.error('Error deleting client:', error);
@@ -883,23 +874,6 @@ class AmneziaApp {
         }
     }
 
-    startServer(serverId) {
-        fetch(`/api/servers/${serverId}/start`, { method: 'POST' })
-            .then(() => this.loadServers())
-            .catch(error => {
-                console.error('Error starting server:', error);
-                alert('Error starting server: ' + error.message);
-            });
-    }
-
-    stopServer(serverId) {
-        fetch(`/api/servers/${serverId}/stop`, { method: 'POST' })
-            .then(() => this.loadServers())
-            .catch(error => {
-                console.error('Error stopping server:', error);
-                alert('Error stopping server: ' + error.message);
-            });
-    }
 
     showClientModal(serverId, client = null) {
         const modalTitle = client ? 'Edit Client' : 'Add New Client';
@@ -908,8 +882,7 @@ class AmneziaApp {
         const iSettings = client ? (client.i_settings || {}) : {};
         
         // Get default I values from server info
-        fetch(`/api/servers/${serverId}/info`)
-            .then(response => response.json())
+        api.getServerInfo(serverId)
             .then(serverInfo => {
                 this.showClientModalWithDefaults(serverId, modalTitle, clientName, applyISettings, iSettings, serverInfo.default_i_settings || {}, client);
             })
@@ -1137,7 +1110,7 @@ class AmneziaApp {
         const applyISettings = document.getElementById('applyISettings').checked;
         
         if (!clientName) {
-            showTempMessage('Client name is required', 'error');
+            ui.showTempMessage('Client name is required', 'error');
             return;
         }
 
@@ -1166,85 +1139,42 @@ class AmneziaApp {
         let url, method;
         
         if (clientId) {
-            // Update existing client - use the i-settings endpoint first
-            url = `/api/servers/${serverId}/clients/${clientId}/i-settings`;
-            method = 'PUT';
-
             // Save client I-settings first
-            fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.error) {
-                    throw new Error(result.error);
-                }
-
-                // Then save suspension time if set
-                const suspendAtInput = document.getElementById('suspendAt');
-                if (suspendAtInput) {
-                    const suspendAtLocal = suspendAtInput.value; // e.g. "2026-03-30T02:58"
+            api.updateClientISettings(serverId, clientId, data)
+                .then(() => {
+                    // Далее работа с suspend-time (отдельный вызов)
+                    const suspendAtInput = document.getElementById('suspendAt');
                     let suspendAtUTC = null;
-
-                    if (suspendAtLocal) {
-                        const [datePart, timePart] = suspendAtLocal.split('T');
-                        const [year, month, day] = datePart.split('-').map(Number);
-                        const [hour, minute] = timePart.split(':').map(Number);
-                        const localDate = new Date(year, month - 1, day, hour, minute);
+                    if (suspendAtInput && suspendAtInput.value) {
+                        const localDate = new Date(suspendAtInput.value);
                         suspendAtUTC = localDate.toISOString();
                     }
-
-                    return fetch(`/api/servers/${serverId}/clients/${clientId}/suspend-time`, {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ suspend_at: suspendAtUTC || null })
-                    });
-                }
-                return null;
-            })
-            .then(suspensionResult => {
-                if (suspensionResult && !suspensionResult.ok) {
-                    console.warn('Failed to set suspension time');
-                }
-                showTempMessage('Client updated successfully!', 'success');
-                this.closeClientModal();
-                this.loadServers();
-            })
-            .catch(error => {
-                console.error('Error saving client:', error);
-                showTempMessage(`Error saving client: ${error.message}`, 'error');
-            });
+                    if (suspendAtUTC !== undefined) {
+                        return api.setClientSuspendTime(serverId, clientId, suspendAtUTC);
+                    }
+                    return Promise.resolve();
+                })
+                .then(() => {
+                    ui.showTempMessage('Client updated successfully!', 'success');
+                    this.closeClientModal();
+                    this.loadServers();
+                })
+                .catch(error => {
+                    console.error('Error saving client:', error);
+                    ui.showTempMessage(`Error saving client: ${error.message}`, 'error');
+                });
         } else {
             // Create new client
-            url = `/api/servers/${serverId}/clients`;
-            method = 'POST';
-
-            fetch(url, {
-                method: method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(result => {
-                if (result.error) {
-                    throw new Error(result.error);
-                }
-                showTempMessage('Client added successfully!', 'success');
-                this.closeClientModal();
-                this.loadServers();
-            })
-            .catch(error => {
-                console.error('Error saving client:', error);
-                showTempMessage(`Error saving client: ${error.message}`, 'error');
-            });
+            api.addClient(serverId, data)
+                .then(() => {
+                    ui.showTempMessage('Client added successfully!', 'success');
+                    this.closeClientModal();
+                    this.loadServers();
+                })
+                .catch(error => {
+                    console.error('Error saving client:', error);
+                    ui.showTempMessage(`Error saving client: ${error.message}`, 'error');
+                });
         }
     }
 
@@ -1264,83 +1194,65 @@ class AmneziaApp {
         }
         
         // If not found in loaded data, fetch it
-        fetch(`/api/servers/${serverId}/info`)
-            .then(response => response.json())
+        api.getServerInfo(serverId)
             .then(serverInfo => {
                 const client = serverInfo.clients?.find(c => c.id === clientId);
                 if (client) {
                     this.showClientModal(serverId, client);
                 } else {
-                    showTempMessage('Client not found', 'error');
+                    ui.showTempMessage('Client not found', 'error');
                 }
             })
             .catch(error => {
                 console.error('Error fetching client:', error);
-                showTempMessage('Error loading client: ' + error.message, 'error');
+                ui.showTempMessage('Error loading client: ' + error.message, 'error');
             });
     }
 
     suspendClient(serverId, clientId) {
-        if (confirm('Are you sure you want to suspend this client? The client will lose connection until reactivated.')) {
-            fetch(`/api/servers/${serverId}/clients/${clientId}/suspend`, {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                showTempMessage('Client suspended successfully', 'success');
+        api.suspendClient(serverId, clientId)
+            .then(() => {
+                ui.showTempMessage('Client suspended successfully', 'success');
                 this.loadServers();
             })
             .catch(error => {
                 console.error('Error suspending client:', error);
                 alert('Error suspending client: ' + error.message);
             });
-        }
     }
 
     activateClient(serverId, clientId) {
-        if (confirm('Are you sure you want to activate this suspended client?')) {
-            fetch(`/api/servers/${serverId}/clients/${clientId}/activate`, {
-                method: 'POST'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    throw new Error(data.error);
-                }
-                showTempMessage('Client activated successfully', 'success');
+        api.activateClient(serverId, clientId)
+            .then(() => {
+                ui.showTempMessage('Client activated successfully', 'success');
                 this.loadServers();
             })
             .catch(error => {
                 console.error('Error activating client:', error);
                 alert('Error activating client: ' + error.message);
             });
-        }
     }
 
     loadDefaultISettings() {
-        fetch('/api/defaults')
-        .then(response => response.json())
+        api.getDefaults()
         .then(data => {
             // Установка значений в поля формы
-            const mtuInput = getElement('serverMTU');
+            const mtuInput = ui.getElement('serverMTU');
             if (mtuInput && data.mtu) {
                 mtuInput.value = data.mtu;
             }
             
-            const subnetInput = getElement('serverSubnet');
+            const subnetInput = ui.getElement('serverSubnet');
             if (subnetInput && data.subnet) {
                 subnetInput.value = data.subnet;
             }
             
-            const portInput = getElement('serverPort');
+            const portInput = ui.getElement('serverPort');
             if (portInput && data.port) {
                 portInput.value = data.port;
             }
             
-            const dnsInput = getElement('serverDNS');
+            const dnsInput = ui.getElement('serverDNS');
             if (dnsInput && data.dns) {
                 dnsInput.value = data.dns;
             }
@@ -1357,8 +1269,7 @@ class AmneziaApp {
     }
 
     showServerConfig(serverId) {
-        fetch(`/api/servers/${serverId}/info`)
-            .then(response => response.json())
+        api.getServerInfo(serverId)
             .then(serverInfo => {
                 this.displayServerConfigModal(serverInfo);
             })
@@ -1369,8 +1280,7 @@ class AmneziaApp {
     }
 
     showRawServerConfig(serverId) {
-        fetch(`/api/servers/${serverId}/config`)
-            .then(response => response.json())
+        api.getServerInfo(serverId)
             .then(config => {
                 this.displayRawConfigModal(config);
             })
@@ -1381,7 +1291,7 @@ class AmneziaApp {
     }
 
     downloadServerConfig(serverId) {
-        window.open(`/api/servers/${serverId}/config/download`, '_blank');
+        api.downloadServerConfig(serverId);
     }
 
     displayServerConfigModal(serverInfo) {
@@ -1763,7 +1673,7 @@ class AmneziaApp {
             }
         } catch (error) {
             console.error('Error fetching config for QR code:', error);
-            showTempMessage('Failed to generate QR code: ' + error.message, 'error');
+            ui.showTempMessage('Failed to generate QR code: ' + error.message, 'error');
             this.closeQRModal();
         }
     }
@@ -1883,15 +1793,15 @@ class AmneziaApp {
             
             try {
                 navigator.clipboard.writeText(configTextArea.value).then(() => {
-                    showTempMessage('Configuration copied to clipboard!', 'success');
+                    ui.showTempMessage('Configuration copied to clipboard!', 'success');
                 }).catch(err => {
                     // Fallback for older browsers
                     document.execCommand('copy');
-                    showTempMessage('Configuration copied to clipboard!', 'success');
+                    ui.showTempMessage('Configuration copied to clipboard!', 'success');
                 });
             } catch (err) {
                 document.execCommand('copy');
-                showTempMessage('Configuration copied to clipboard!', 'success');
+                ui.showTempMessage('Configuration copied to clipboard!', 'success');
             }
         }
     }
@@ -1908,10 +1818,10 @@ class AmneziaApp {
 
         navigator.clipboard.writeText(text).then(() => {
             // Show a temporary notification
-            showTempMessage('Configuration copied to clipboard!', 'success');
+            ui.showTempMessage('Configuration copied to clipboard!', 'success');
         }).catch(err => {
             console.error('Failed to copy: ', err);
-            showTempMessage('Failed to copy to clipboard', 'error');
+            ui.showTempMessage('Failed to copy to clipboard', 'error');
         });
     }
 
@@ -1944,8 +1854,8 @@ class AmneziaApp {
     }
 
     toggleLogsSection() {
-        const container = getElement('logsContainer');
-        const icon = getElement('logsToggleIcon');
+        const container = ui.getElement('logsContainer');
+        const icon = ui.getElement('logsToggleIcon');
         
         if (container && icon) {
             if (container.classList.contains('hidden')) {
@@ -1961,14 +1871,13 @@ class AmneziaApp {
     }
 
     loadLogsList() {
-        fetch('/api/logs/list')
-            .then(response => response.json())
+        api.getLogsList()
             .then(logs => {
                 this.renderLogTabs(logs);
             })
             .catch(error => {
                 console.error('Error loading logs list:', error);
-                const tabsContainer = getElement('logTabs');
+                const tabsContainer = ui.getElement('logTabs');
                 if (tabsContainer) {
                     tabsContainer.innerHTML = '<div class="text-red-500 p-4">Error loading logs</div>';
                 }
@@ -1976,8 +1885,8 @@ class AmneziaApp {
     }
 
     renderLogTabs(logs) {
-        const tabsContainer = getElement('logTabs');
-        const contentContainer = getElement('logContent');
+        const tabsContainer = ui.getElement('logTabs');
+        const contentContainer = ui.getElement('logContent');
         
         if (!tabsContainer || !contentContainer) return;
         
@@ -1997,7 +1906,7 @@ class AmneziaApp {
                     <button class="log-tab px-4 py-2 text-sm font-medium focus:outline-none transition-colors duration-200 ${index === 0 ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'}"
                             data-log-index="${index}"
                             onclick="amneziaApp.switchLogTab(${index})">
-                        ${escapeHtml(log.name)}
+                        ${ui.escapeHtml(log.name)}
                         <span class="ml-1 text-xs text-gray-400">(${log.size_human})</span>
                     </button>
                 `).join('')}
@@ -2045,7 +1954,7 @@ class AmneziaApp {
     }
 
     loadLogContent(logPath) {
-        const contentContainer = getElement('logContent');
+        const contentContainer = ui.getElement('logContent');
         if (!contentContainer) return;
         
         // Show loading indicator
@@ -2055,8 +1964,7 @@ class AmneziaApp {
             </div>
         `;
         
-        fetch(`/api/logs/view?path=${encodeURIComponent(logPath)}&lines=100`)
-            .then(response => response.json())
+        api.getLogContent(logPath, 100)
             .then(data => {
                 if (data.error) {
                     contentContainer.innerHTML = `<div class="text-red-500 p-4">Error: ${data.error}</div>`;
@@ -2094,7 +2002,7 @@ class AmneziaApp {
                 continue;
             }
             
-            let formattedLine = escapeHtml(line);
+            let formattedLine = ui.escapeHtml(line);
             
             // Color coding based on log type
             if (logType === 'error') {
@@ -2143,7 +2051,7 @@ class AmneziaApp {
     downloadCurrentLog() {
         if (this.availableLogs && this.currentLogIndex !== undefined) {
             const log = this.availableLogs[this.currentLogIndex];
-            window.open(`/api/logs/download?path=${encodeURIComponent(log.path)}`, '_blank');
+            api.downloadLog(log.path);
         }
     }
 }
